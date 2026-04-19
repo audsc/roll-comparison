@@ -48,9 +48,7 @@ export class SessionsService {
   }
 
   async close(session: Session, reason: CloseReason): Promise<Session> {
-    session.status = SessionStatus.CLOSED;
-    session.closeReason = reason;
-    const saved = await this.sessionRepo.save(session);
+    const saved = await this.sessionRepo.save({ ...session, status: SessionStatus.CLOSED, closeReason: reason });
     this.sseService.broadcast(saved.id, {
       type: 'session_closed',
       data: { reason },

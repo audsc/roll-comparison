@@ -39,8 +39,14 @@ export class ComparisonsService {
   }
 
   private async buildResult(participant: Participant, session: Session): Promise<ParticipantResult> {
-    const accessToken = this.authService.decrypt(participant.accessToken);
-    const refreshToken = this.authService.decrypt(participant.refreshToken);
+    let accessToken: string;
+    let refreshToken: string;
+    try {
+      accessToken = this.authService.decrypt(participant.accessToken);
+      refreshToken = this.authService.decrypt(participant.refreshToken);
+    } catch {
+      return { participantId: participant.id, displayName: participant.displayName, workout: null, hrZones: null, recovery: null };
+    }
     const start = session.windowStart.toISOString();
     const end = session.windowEnd.toISOString();
 

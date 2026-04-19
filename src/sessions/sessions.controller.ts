@@ -5,7 +5,7 @@ import {
 import { Observable, map } from 'rxjs';
 import { SessionsService, CreateSessionDto } from './sessions.service';
 import { SseService } from '../sse/sse.service';
-import { CloseReason } from './sessions.entity';
+import { CloseReason, SessionStatus } from './sessions.entity';
 
 interface CreateSessionBody {
   label: string;
@@ -58,6 +58,9 @@ export class SessionsController {
   async close(@Param('id') id: string) {
     const session = await this.sessionsService.findOne(id);
     if (!session) throw new NotFoundException('Session not found');
+    if (session.status === SessionStatus.CLOSED) {
+      return { status: session.status, closeReason: session.closeReason };
+    }
     const closed = await this.sessionsService.close(session, CloseReason.MANUAL);
     return { status: closed.status, closeReason: closed.closeReason };
   }
