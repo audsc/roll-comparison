@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Session, SessionStatus, CloseReason } from './sessions.entity';
 import { SseService } from '../sse/sse.service';
+import { ComparisonsService } from '../comparisons/comparisons.service';
 
 export interface CreateSessionDto {
   label: string;
@@ -17,6 +18,7 @@ export class SessionsService {
     @InjectRepository(Session)
     private readonly sessionRepo: Repository<Session>,
     private readonly sseService: SseService,
+    private readonly comparisonsService: ComparisonsService,
   ) {}
 
   async create(dto: CreateSessionDto): Promise<Session> {
@@ -52,6 +54,9 @@ export class SessionsService {
     this.sseService.broadcast(saved.id, {
       type: 'session_closed',
       data: { reason },
+    });
+    this.comparisonsService.generate(saved).catch((err) => {
+      console.error(`Failed to generate comparison for session ${saved.id}:`, err);
     });
     return saved;
   }

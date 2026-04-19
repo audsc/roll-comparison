@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { SessionsService } from './sessions.service';
 import { Session, SessionStatus, CloseReason } from './sessions.entity';
 import { SseService } from '../sse/sse.service';
+import { ComparisonsService } from '../comparisons/comparisons.service';
 
 const mockRepo = () => ({
   save: jest.fn(),
@@ -26,6 +27,7 @@ describe('SessionsService', () => {
         SessionsService,
         { provide: getRepositoryToken(Session), useFactory: mockRepo },
         { provide: SseService, useFactory: mockSse },
+        { provide: ComparisonsService, useValue: { generate: jest.fn().mockResolvedValue({}) } },
       ],
     }).compile();
     service = module.get(SessionsService);

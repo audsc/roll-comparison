@@ -5,6 +5,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { WhoopModule } from './whoop/whoop.module';
+import { SessionsModule } from './sessions/sessions.module';
+import { ParticipantsModule } from './participants/participants.module';
+import { ComparisonsModule } from './comparisons/comparisons.module';
+import { SseModule } from './sse/sse.module';
 
 @Module({
   imports: [
@@ -20,6 +24,10 @@ import { WhoopModule } from './whoop/whoop.module';
     }),
     AuthModule,
     WhoopModule,
+    SessionsModule,
+    ParticipantsModule,
+    ComparisonsModule,
+    SseModule,
   ],
   controllers: [AppController],
   providers: [AppService],
