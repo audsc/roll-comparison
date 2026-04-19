@@ -2,7 +2,6 @@ import {
   Entity, PrimaryGeneratedColumn, Column,
   CreateDateColumn, OneToMany,
 } from 'typeorm';
-// @ts-ignore
 import { Participant } from '../participants/participants.entity';
 
 export enum SessionStatus {
@@ -42,6 +41,6 @@ export class Session {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @OneToMany(() => Participant, (p: any) => p.session, { eager: false })
+  @OneToMany(() => Participant, (p) => p.session, { eager: false })
   participants: Participant[];
 }
