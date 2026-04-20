@@ -1,7 +1,15 @@
 import {
-  Controller, Post, Get, Delete, Param, Body,
-  NotFoundException, Sse, HttpCode,
+  Controller,
+  Post,
+  Get,
+  Delete,
+  Param,
+  Body,
+  NotFoundException,
+  Sse,
+  HttpCode,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { Observable, map } from 'rxjs';
 import { SessionsService, CreateSessionDto } from './sessions.service';
 import { SseService } from '../sse/sse.service';
@@ -14,6 +22,7 @@ interface CreateSessionBody {
   maxParticipants?: number;
 }
 
+@ApiTags('sessions')
 @Controller('sessions')
 export class SessionsController {
   constructor(
@@ -21,6 +30,18 @@ export class SessionsController {
     private readonly sseService: SseService,
   ) {}
 
+  @ApiOperation({ summary: 'Create a comparison session' })
+  @ApiBody({
+    schema: {
+      example: {
+        label: 'Monday Night BJJ',
+        windowStart: '2026-04-20T18:00:00Z',
+        windowEnd: '2026-04-20T19:00:00Z',
+        maxParticipants: 4,
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Returns the new sessionId', schema: { example: { sessionId: 'uuid' } } })
   @Post()
   async create(@Body() body: CreateSessionBody) {
     const session = await this.sessionsService.create({
@@ -32,6 +53,10 @@ export class SessionsController {
     return { sessionId: session.id };
   }
 
+  @ApiOperation({ summary: 'Get session info and participant list' })
+  @ApiParam({ name: 'id', description: 'Session UUID' })
+  @ApiResponse({ status: 200, description: 'Session details with participants' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
   @Get(':id')
   async findOne(@Param('id') id: string) {
     const session = await this.sessionsService.findOne(id);
@@ -53,6 +78,10 @@ export class SessionsController {
     };
   }
 
+  @ApiOperation({ summary: 'Manually close a session and trigger comparison generation' })
+  @ApiParam({ name: 'id', description: 'Session UUID' })
+  @ApiResponse({ status: 200, description: 'Session closed' })
+  @ApiResponse({ status: 404, description: 'Session not found' })
   @Delete(':id/close')
   @HttpCode(200)
   async close(@Param('id') id: string) {
@@ -61,14 +90,19 @@ export class SessionsController {
     if (session.status === SessionStatus.CLOSED) {
       return { status: session.status, closeReason: session.closeReason };
     }
-    const closed = await this.sessionsService.close(session, CloseReason.MANUAL);
+    const closed = await this.sessionsService.close(
+      session,
+      CloseReason.MANUAL,
+    );
     return { status: closed.status, closeReason: closed.closeReason };
   }
 
+  @ApiOperation({ summary: 'Subscribe to SSE events for a session (participant_joined, session_closed, comparison_ready)' })
+  @ApiParam({ name: 'id', description: 'Session UUID' })
   @Sse(':id/events')
   stream(@Param('id') id: string): Observable<MessageEvent> {
-    return this.sseService.stream(id).pipe(
-      map((event) => ({ data: event }) as MessageEvent),
-    );
+    return this.sseService
+      .stream(id)
+      .pipe(map((event) => ({ data: event }) as MessageEvent));
   }
 }
