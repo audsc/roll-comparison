@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
@@ -23,7 +23,7 @@ import { SseModule } from '../sse/sse.module';
       }),
     }),
     ParticipantsModule,
-    WhoopModule,
+    forwardRef(() => WhoopModule),
     SessionsModule,
     SseModule,
   ],
