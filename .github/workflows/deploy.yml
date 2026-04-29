@@ -1,0 +1,45 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: WHOOP_CLIENT_ID,WHOOP_CLIENT_SECRET,WHOOP_CALLBACK_URL,SESSION_SECRET,DATABASE_URL,ENCRYPTION_KEY,ANGULAR_APP_URL,JWT_SECRET
+          script: |
+            cat > ~/roll-comparison/.env << EOF
+            WHOOP_CLIENT_ID=$WHOOP_CLIENT_ID
+            WHOOP_CLIENT_SECRET=$WHOOP_CLIENT_SECRET
+            WHOOP_CALLBACK_URL=$WHOOP_CALLBACK_URL
+            SESSION_SECRET=$SESSION_SECRET
+            PORT=3000
+            NODE_ENV=production
+            DATABASE_URL=$DATABASE_URL
+            ENCRYPTION_KEY=$ENCRYPTION_KEY
+            ANGULAR_APP_URL=$ANGULAR_APP_URL
+            JWT_SECRET=$JWT_SECRET
+            EOF
+
+            cd ~/roll-comparison
+            git pull origin main
+            npm ci
+            npm run build
+            pm2 restart roll-comparison || pm2 start dist/main.js --name roll-comparison
+        env:
+          WHOOP_CLIENT_ID: ${{ secrets.WHOOP_CLIENT_ID }}
+          WHOOP_CLIENT_SECRET: ${{ secrets.WHOOP_CLIENT_SECRET }}
+          WHOOP_CALLBACK_URL: ${{ secrets.WHOOP_CALLBACK_URL }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ENCRYPTION_KEY: ${{ secrets.ENCRYPTION_KEY }}
+          ANGULAR_APP_URL: ${{ secrets.ANGULAR_APP_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
