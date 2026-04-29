@@ -1,6 +1,10 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, ManyToOne, JoinColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Session } from '../sessions/sessions.entity';
 
@@ -25,8 +29,8 @@ export class Participant {
   @Column({ name: 'access_token', type: 'text' })
   accessToken: string;
 
-  @Column({ name: 'refresh_token', type: 'text' })
-  refreshToken: string;
+  @Column({ name: 'refresh_token', type: 'text', nullable: true })
+  refreshToken: string | null;
 
   @Column({ name: 'is_creator', default: false })
   isCreator: boolean;

@@ -18,13 +18,14 @@ export class AuthService {
    * Call this when you receive a 401 error from WHOOP API
    */
   async refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
-    
     const tokenURL = 'https://api.prod.whoop.com/oauth/oauth2/token';
     const clientId = this.configService.get<string>('WHOOP_CLIENT_ID');
     const clientSecret = this.configService.get<string>('WHOOP_CLIENT_SECRET');
 
     if (!clientId || !clientSecret) {
-      throw new UnauthorizedException('WHOOP client credentials not configured');
+      throw new UnauthorizedException(
+        'WHOOP client credentials not configured',
+      );
     }
 
     const params = new URLSearchParams();
@@ -47,11 +48,11 @@ export class AuthService {
       }
 
       const data: TokenResponse = await response.json();
-      
+
       // Here you would typically:
       // 1. Update the tokens in your database
       // 2. Return the new tokens to the caller
-      
+
       return data;
     } catch (error) {
       throw new UnauthorizedException('Failed to refresh access token');
@@ -65,10 +66,10 @@ export class AuthService {
   async makeWhoopApiRequest(
     endpoint: string,
     accessToken: string,
-    refreshToken: string,
+    refreshToken: string | undefined,
   ): Promise<any> {
     const baseURL = 'https://api.prod.whoop.com/developer/v1';
-    
+
     try {
       let response = await fetch(`${baseURL}${endpoint}`, {
         headers: {
@@ -78,8 +79,9 @@ export class AuthService {
 
       // If token expired, refresh and retry
       if (response.status === 401) {
+        if (!refreshToken) throw new Error('Access token expired and no refresh token available');
         const newTokens = await this.refreshAccessToken(refreshToken);
-        
+
         response = await fetch(`${baseURL}${endpoint}`, {
           headers: {
             Authorization: `Bearer ${newTokens.access_token}`,

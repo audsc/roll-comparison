@@ -31,7 +31,7 @@ describe('ParticipantsService', () => {
         isCreator: true,
       };
       const saved = { ...dto, id: 'part-1', joinedAt: new Date() };
-      (repo.save as jest.Mock).mockResolvedValue(saved);
+      repo.save.mockResolvedValue(saved);
       const result = await service.add(dto);
       expect(result.id).toBe('part-1');
       expect(repo.save).toHaveBeenCalledWith(dto);
@@ -40,17 +40,22 @@ describe('ParticipantsService', () => {
 
   describe('getBySession', () => {
     it('returns all participants for a session', async () => {
-      const parts = [{ id: 'p1', sessionId: 'session-1' }, { id: 'p2', sessionId: 'session-1' }];
-      (repo.find as jest.Mock).mockResolvedValue(parts);
+      const parts = [
+        { id: 'p1', sessionId: 'session-1' },
+        { id: 'p2', sessionId: 'session-1' },
+      ];
+      repo.find.mockResolvedValue(parts);
       const result = await service.getBySession('session-1');
       expect(result).toHaveLength(2);
-      expect(repo.find).toHaveBeenCalledWith({ where: { sessionId: 'session-1' } });
+      expect(repo.find).toHaveBeenCalledWith({
+        where: { sessionId: 'session-1' },
+      });
     });
   });
 
   describe('countBySession', () => {
     it('returns the participant count for a session', async () => {
-      (repo.count as jest.Mock).mockResolvedValue(3);
+      repo.count.mockResolvedValue(3);
       const result = await service.countBySession('session-1');
       expect(result).toBe(3);
     });

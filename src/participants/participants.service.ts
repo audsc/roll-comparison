@@ -8,7 +8,7 @@ export interface AddParticipantDto {
   whoopUserId: string;
   displayName: string;
   accessToken: string;
-  refreshToken: string;
+  refreshToken: string | null;
   isCreator: boolean;
 }
 

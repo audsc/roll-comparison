@@ -1,6 +1,9 @@
 import {
-  Entity, PrimaryGeneratedColumn, Column,
-  CreateDateColumn, OneToMany,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  OneToMany,
 } from 'typeorm';
 import { Participant } from '../participants/participants.entity';
 
@@ -12,7 +15,6 @@ export enum SessionStatus {
 export enum CloseReason {
   MAX_REACHED = 'max_reached',
   MANUAL = 'manual',
-  TIME_EXPIRED = 'time_expired',
 }
 
 @Entity('sessions')
@@ -35,7 +37,12 @@ export class Session {
   @Column({ type: 'enum', enum: SessionStatus, default: SessionStatus.OPEN })
   status: SessionStatus;
 
-  @Column({ type: 'enum', enum: CloseReason, nullable: true, name: 'close_reason' })
+  @Column({
+    type: 'enum',
+    enum: CloseReason,
+    nullable: true,
+    name: 'close_reason',
+  })
   closeReason: CloseReason | null;
 
   @CreateDateColumn({ name: 'created_at' })

@@ -33,30 +33,24 @@ export class SessionsService {
   }
 
   async findOne(id: string): Promise<Session | null> {
-    const session = await this.sessionRepo.findOne({
-      where: { id },
-      relations: ['participants'],
-    });
-    if (!session) return null;
-    return this.checkAndCloseIfExpired(session);
-  }
-
-  async checkAndCloseIfExpired(session: Session): Promise<Session> {
-    if (session.status === SessionStatus.CLOSED) return session;
-    if (new Date() > session.windowEnd) {
-      return this.close(session, CloseReason.TIME_EXPIRED);
-    }
-    return session;
+    return this.sessionRepo.findOne({ where: { id }, relations: ['participants'] });
   }
 
   async close(session: Session, reason: CloseReason): Promise<Session> {
-    const saved = await this.sessionRepo.save({ ...session, status: SessionStatus.CLOSED, closeReason: reason });
+    await this.sessionRepo.update(session.id, {
+      status: SessionStatus.CLOSED,
+      closeReason: reason,
+    });
+    const saved = { ...session, status: SessionStatus.CLOSED, closeReason: reason };
     this.sseService.broadcast(saved.id, {
       type: 'session_closed',
       data: { reason },
     });
     this.comparisonsService.generate(saved).catch((err) => {
-      console.error(`Failed to generate comparison for session ${saved.id}:`, err);
+      console.error(
+        `Failed to generate comparison for session ${saved.id}:`,
+        err,
+      );
     });
     return saved;
   }

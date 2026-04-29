@@ -8,7 +8,7 @@ import { AuthService } from './auth.service';
 import { WhoopService } from '../whoop/whoop.service';
 import { SessionsService } from '../sessions/sessions.service';
 import { SseService } from '../sse/sse.service';
-import { CloseReason } from '../sessions/sessions.entity';
+import { CloseReason, SessionStatus } from '../sessions/sessions.entity';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -62,6 +62,9 @@ export class AuthController {
     if (!session) {
       return res.status(404).json({ message: 'Session not found' });
     }
+    if (session.status === SessionStatus.CLOSED) {
+      return res.status(400).json({ message: 'Session is already closed' });
+    }
 
     const profile = await this.whoopService.getUserProfile(
       accessToken,
@@ -72,7 +75,7 @@ export class AuthController {
       whoopUserId: String(profile.user_id),
       displayName: profile.first_name ?? 'Athlete',
       accessToken: this.authService.encrypt(accessToken),
-      refreshToken: this.authService.encrypt(refreshToken),
+      refreshToken: refreshToken ? this.authService.encrypt(refreshToken) : null,
       isCreator,
     });
 

@@ -13,8 +13,7 @@ describe('AuthService — encryption', () => {
           provide: ConfigService,
           useValue: {
             get: (key: string) => {
-              if (key === 'ENCRYPTION_KEY')
-                return 'a'.repeat(64); // 32 bytes as hex = 64 chars
+              if (key === 'ENCRYPTION_KEY') return 'a'.repeat(64); // 32 bytes as hex = 64 chars
               return undefined;
             },
           },

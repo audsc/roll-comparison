@@ -21,11 +21,16 @@ export class ComparisonsService {
   ) {}
 
   async generate(session: Session): Promise<Comparison> {
-    const participants = await this.participantsService.getBySession(session.id);
+    const participants = await this.participantsService.getBySession(
+      session.id,
+    );
     const results = await Promise.all(
       participants.map((p) => this.buildResult(p, session)),
     );
-    const comparison = await this.comparisonRepo.save({ sessionId: session.id, results });
+    const comparison = await this.comparisonRepo.save({
+      sessionId: session.id,
+      results,
+    });
     this.sseService.broadcast(session.id, {
       type: 'comparison_ready',
       data: { comparisonId: comparison.id },
@@ -38,14 +43,25 @@ export class ComparisonsService {
     return this.comparisonRepo.findOne({ where: { sessionId } });
   }
 
-  private async buildResult(participant: Participant, session: Session): Promise<ParticipantResult> {
+  private async buildResult(
+    participant: Participant,
+    session: Session,
+  ): Promise<ParticipantResult> {
     let accessToken: string;
-    let refreshToken: string;
+    let refreshToken: string | undefined;
     try {
       accessToken = this.authService.decrypt(participant.accessToken);
-      refreshToken = this.authService.decrypt(participant.refreshToken);
+      refreshToken = participant.refreshToken
+        ? this.authService.decrypt(participant.refreshToken)
+        : undefined;
     } catch {
-      return { participantId: participant.id, displayName: participant.displayName, workout: null, hrZones: null, recovery: null };
+      return {
+        participantId: participant.id,
+        displayName: participant.displayName,
+        workout: null,
+        hrZones: null,
+        recovery: null,
+      };
     }
     const start = session.windowStart.toISOString();
     const end = session.windowEnd.toISOString();
@@ -79,9 +95,15 @@ export class ComparisonsService {
         : null,
       hrZones: workout?.score?.zone_duration
         ? {
-            light: Math.round(workout.score.zone_duration.zone_one_milli / 60000),
-            moderate: Math.round(workout.score.zone_duration.zone_two_milli / 60000),
-            vigorous: Math.round(workout.score.zone_duration.zone_three_milli / 60000),
+            light: Math.round(
+              workout.score.zone_duration.zone_one_milli / 60000,
+            ),
+            moderate: Math.round(
+              workout.score.zone_duration.zone_two_milli / 60000,
+            ),
+            vigorous: Math.round(
+              workout.score.zone_duration.zone_three_milli / 60000,
+            ),
             peak: Math.round(
               (workout.score.zone_duration.zone_four_milli +
                 workout.score.zone_duration.zone_five_milli) /
